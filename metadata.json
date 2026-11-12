@@ -1,0 +1,6 @@
+{
+  "name": "StageFlow Outbound — Sistem Scan Bangsal & Staging Realtime",
+  "description": "Aplikasi manajemen outbound gudang realtime untuk scan barcode multi-item, pengelolaan staging manual, penandaan tag bangsal (Reg, HV, DOC, BP, CARGO), barcode scan ulang antar-perangkat, serta sinkronisasi Google Sheets dan ekspor CSV.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

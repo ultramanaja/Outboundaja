@@ -68,143 +68,35 @@ function normalizeTag(value: unknown): BangsalTag {
   return 'Reg';
 }
 
+const DEFAULT_STAGING_CODES = [
+  'TANB', 'TBET', 'KBYB', 'JGKA', 'CNER', 'PSMG', 'PREB', 'CPYU',
+  'KRAJ', 'BJIN', 'TJHL', 'BGOT', 'KASB', 'BOGU', 'CLKU', 'SKMJ',
+  'CBTO', 'SDBR', 'PDGD', 'TLJU', 'STIB', 'TNGH', 'BGSR', 'JTSA',
+  'TPOS', 'KDUM', 'SMJA', 'PMAS', 'PCRM', 'CGIN', 'CLBR', 'MLYH',
+  'SKMN', 'SKB', 'STR', 'SRG', 'KRW',
+] as const;
+
 function createSeedState(): AppDatabaseState {
-  const baseTime = '2026-11-12T08:15:00.000Z';
+  const baseTime = new Date().toISOString();
   return {
-    stagings: [
-      {
-        id: 'stg-jkt-01',
-        name: 'STG-JKT-01',
-        destination: 'Hub Jakarta Utara · Gate A1',
-        isManual: false,
-        createdAt: '2026-11-12T07:30:00.000Z',
-        updatedAt: '2026-11-12T08:12:00.000Z',
-        items: [
-          {
-            id: 'bgs-seed-1',
-            bangsalCode: 'BGS-JKT-4401',
-            qtyBagseal: 4,
-            tag: 'Reg',
-            scannedAt: '2026-11-12T08:10:12.000Z',
-          },
-          {
-            id: 'bgs-seed-2',
-            bangsalCode: 'BGS-JKT-4402',
-            qtyBagseal: 2,
-            tag: 'HV',
-            scannedAt: '2026-11-12T08:11:05.000Z',
-          },
-          {
-            id: 'bgs-seed-3',
-            bangsalCode: 'BGS-JKT-4403',
-            qtyBagseal: 1,
-            tag: 'DOC',
-            scannedAt: '2026-11-12T08:12:00.000Z',
-          },
-        ],
-      },
-      {
-        id: 'stg-sby-01',
-        name: 'STG-SBY-01',
-        destination: 'Hub Surabaya Rungkut · Gate C1',
-        isManual: false,
-        createdAt: '2026-11-12T07:35:00.000Z',
-        updatedAt: '2026-11-12T08:05:00.000Z',
-        items: [
-          {
-            id: 'bgs-seed-4',
-            bangsalCode: 'BGS-SBY-7101',
-            qtyBagseal: 5,
-            tag: 'CARGO',
-            scannedAt: '2026-11-12T08:03:20.000Z',
-          },
-          {
-            id: 'bgs-seed-5',
-            bangsalCode: 'BGS-SBY-7102',
-            qtyBagseal: 3,
-            tag: 'BP',
-            scannedAt: '2026-11-12T08:05:00.000Z',
-          },
-        ],
-      },
-      {
-        id: 'stg-bdg-02',
-        name: 'STG-BDG-02',
-        destination: 'Hub Bandung Soekarno-Hatta · Gate B2',
-        isManual: false,
-        createdAt: '2026-11-12T07:40:00.000Z',
-        updatedAt: '2026-11-12T07:40:00.000Z',
-        items: [],
-      },
-    ],
-    outboundHistory: [
-      {
-        id: 'OUT-20261112-A81F',
-        stagingId: 'stg-mdn-01',
-        stagingName: 'STG-MDN-01',
-        destination: 'Hub Medan Amplas · Gate D1',
-        completedAt: '2026-11-12T07:55:00.000Z',
-        totalBangsal: 3,
-        totalBagseal: 10,
-        syncStatus: 'pending',
-        items: [
-          {
-            id: 'bgs-hist-1',
-            bangsalCode: 'BGS-MDN-1201',
-            qtyBagseal: 3,
-            tag: 'Reg',
-            scannedAt: '2026-11-12T07:48:00.000Z',
-          },
-          {
-            id: 'bgs-hist-2',
-            bangsalCode: 'BGS-MDN-1202',
-            qtyBagseal: 1,
-            tag: 'HV',
-            scannedAt: '2026-11-12T07:50:15.000Z',
-          },
-          {
-            id: 'bgs-hist-3',
-            bangsalCode: 'BGS-MDN-1203',
-            qtyBagseal: 6,
-            tag: 'CARGO',
-            scannedAt: '2026-11-12T07:53:40.000Z',
-          },
-        ],
-      },
-      {
-        id: 'OUT-20261112-B40C',
-        stagingId: 'stg-smg-03',
-        stagingName: 'STG-SMG-03',
-        destination: 'Hub Semarang Barat · Gate A4',
-        completedAt: '2026-11-12T07:20:00.000Z',
-        totalBangsal: 2,
-        totalBagseal: 6,
-        syncStatus: 'synced',
-        syncedAt: '2026-11-12T07:24:10.000Z',
-        syncTarget: 'Google Sheets (Outbound_Log)',
-        items: [
-          {
-            id: 'bgs-hist-4',
-            bangsalCode: 'BGS-SMG-3101',
-            qtyBagseal: 4,
-            tag: 'Reg',
-            scannedAt: '2026-11-12T07:15:00.000Z',
-          },
-          {
-            id: 'bgs-hist-5',
-            bangsalCode: 'BGS-SMG-3102',
-            qtyBagseal: 2,
-            tag: 'BP',
-            scannedAt: '2026-11-12T07:18:10.000Z',
-          },
-        ],
-      },
-    ],
+    stagings: DEFAULT_STAGING_CODES.map((code) => ({
+      id: `stg-${code.toLowerCase()}`,
+      name: code,
+      destination: 'Staging Default',
+      isManual: false,
+      createdAt: baseTime,
+      updatedAt: baseTime,
+      items: [],
+    })),
+    outboundHistory: [],
     syncSettings: {
       gsheetWebhookUrl: process.env.GSHEET_WEBHOOK_URL || '',
       sheetName: 'Outbound_Log',
-      supabaseUrl: process.env.SUPABASE_URL || '',
-      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+      supabaseUrl: process.env.SUPABASE_URL || 'https://japrxrakdloyhuchdlnr.supabase.co',
+      supabaseAnonKey:
+        process.env.SUPABASE_PUBLISHABLE_KEY ||
+        process.env.SUPABASE_ANON_KEY ||
+        'sb_publishable__xAollf27vKdArrQ1QfZxA_qwCzTiv8',
       autoSyncSupabase: true,
     },
     lastUpdated: baseTime,
@@ -224,7 +116,7 @@ function loadDatabase(): AppDatabaseState {
       }
     }
   } catch (err) {
-    console.error('Failed to read database file, initializing seed state:', err);
+    console.error('Failed to read database file, initializing clean default state:', err);
   }
   const seed = createSeedState();
   saveDatabaseToDisk(seed);
@@ -267,6 +159,40 @@ async function mirrorToSupabaseIfConfigured(state: AppDatabaseState): Promise<vo
     });
   } catch (err) {
     console.error('Supabase REST sync notice (check URL & Key):', err);
+  }
+}
+
+async function bootstrapSupabaseSync(): Promise<void> {
+  const rawUrl = dbState.syncSettings.supabaseUrl?.trim();
+  const rawKey = dbState.syncSettings.supabaseAnonKey?.trim();
+  if (!rawUrl || !rawKey || !dbState.syncSettings.autoSyncSupabase) return;
+
+  try {
+    const cleanBase = rawUrl.replace(/\/+$/, '');
+    const res = await fetch(`${cleanBase}/rest/v1/stageflow_state?id=eq.current&select=*&limit=1`, {
+      method: 'GET',
+      headers: {
+        'apikey': rawKey,
+        'Authorization': `Bearer ${rawKey}`,
+      },
+    });
+    if (!res.ok) return;
+    const rows = (await res.json()) as Array<{
+      id: string;
+      stagings?: StagingSession[];
+      outbound_history?: OutboundRecord[];
+      last_updated?: string;
+    }>;
+    if (Array.isArray(rows) && rows.length > 0 && Array.isArray(rows[0].stagings) && rows[0].stagings.length > 0) {
+      dbState.stagings = rows[0].stagings;
+      dbState.outboundHistory = Array.isArray(rows[0].outbound_history) ? rows[0].outbound_history : [];
+      dbState.lastUpdated = rows[0].last_updated || dbState.lastUpdated;
+      saveDatabaseToDisk(dbState);
+    } else {
+      await mirrorToSupabaseIfConfigured(dbState);
+    }
+  } catch (err) {
+    console.error('Supabase bootstrap sync notice:', err);
   }
 }
 

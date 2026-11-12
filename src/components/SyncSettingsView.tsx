@@ -67,7 +67,7 @@ export const SyncSettingsView: React.FC<SyncSettingsViewProps> = ({
 
   const [copiedScript, setCopiedScript] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
-  const [activeGuideTab, setActiveGuideTab] = useState<'supabase' | 'gsheet'>('supabase');
+  const [activeGuideTab, setActiveGuideTab] = useState<'supabase' | 'gsheet' | 'publish'>('publish');
 
   useEffect(() => {
     setSheetName(settings.sheetName || 'Outbound_Log');
@@ -164,12 +164,9 @@ export const SyncSettingsView: React.FC<SyncSettingsViewProps> = ({
           {/* Section Supabase */}
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Konfigurasi Kredensial Supabase
-                </h3>
-              </div>
+              <h3 className="text-sm font-semibold text-slate-900">
+                Konfigurasi Kredensial Supabase
+              </h3>
               <a
                 href="https://supabase.com/dashboard"
                 target="_blank"
@@ -265,8 +262,7 @@ export const SyncSettingsView: React.FC<SyncSettingsViewProps> = ({
 
           {/* Section Google Sheets */}
           <div className="pt-5 border-t border-slate-200 space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
+            <div className="pb-2 border-b border-slate-100">
               <h3 className="text-sm font-semibold text-slate-900">
                 Konfigurasi Google Sheets (Webhook Web App)
               </h3>
@@ -334,7 +330,18 @@ export const SyncSettingsView: React.FC<SyncSettingsViewProps> = ({
               </p>
             </div>
 
-            <div className="inline-flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg self-start">
+            <div className="inline-flex flex-wrap items-center gap-1 p-1 bg-slate-200/70 rounded-lg self-start">
+              <button
+                type="button"
+                onClick={() => setActiveGuideTab('publish')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+                  activeGuideTab === 'publish'
+                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Publish ke outboundaja.skom.id
+              </button>
               <button
                 type="button"
                 onClick={() => setActiveGuideTab('supabase')}
@@ -360,7 +367,33 @@ export const SyncSettingsView: React.FC<SyncSettingsViewProps> = ({
             </div>
           </div>
 
-          {activeGuideTab === 'supabase' ? (
+          {activeGuideTab === 'publish' ? (
+            <div className="space-y-4">
+              <ol className="list-decimal list-inside space-y-2 text-xs text-slate-700 leading-relaxed bg-white p-4 rounded-lg border border-slate-200">
+                <li>
+                  Jalankan perintah build produksi <code className="px-1.5 py-0.5 bg-slate-100 rounded font-mono text-slate-900">npm run build</code> untuk menghasilkan folder siap publish <code className="px-1.5 py-0.5 bg-slate-100 rounded font-mono text-slate-900">dist/</code> (sudah termasuk file <code className="px-1.5 py-0.5 bg-slate-100 rounded font-mono text-slate-900">.htaccess</code> untuk HTTPS &amp; routing SPA).
+                </li>
+                <li>
+                  Buka cPanel / File Manager hosting domain <strong>outboundaja.skom.id</strong>, lalu unggah seluruh isi folder <code className="px-1.5 py-0.5 bg-slate-100 rounded font-mono text-slate-900">dist/</code> ke dalam direktori <code className="px-1.5 py-0.5 bg-slate-100 rounded font-mono text-slate-900">public_html/</code>.
+                </li>
+                <li>
+                  Saat dibuka di <strong>https://outboundaja.skom.id</strong>, aplikasi otomatis terhubung langsung ke database <strong>Supabase Realtime</strong> (<code className="font-mono">japrxrakdloyhuchdlnr.supabase.co</code>) tanpa memerlukan server Node.js di hosting Anda.
+                </li>
+                <li>
+                  Semua scan bangsal, staging manual, dan riwayat outbound di domain Anda akan langsung tersinkronisasi realtime dengan database Supabase yang sama.
+                </li>
+              </ol>
+
+              <div className="p-4 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-800 space-y-1">
+                <p className="font-semibold text-slate-900">
+                  Opsional — Hosting Node.js / VPS (Jika Tersedia):
+                </p>
+                <p>
+                  Jika hosting Anda mendukung Node.js, jalankan <code className="px-1.5 py-0.5 bg-white rounded font-mono">npm run build &amp;&amp; npm start</code> dengan port <code className="font-mono">3000</code> lalu arahkan reverse proxy domain <strong>outboundaja.skom.id</strong>.
+                </p>
+              </div>
+            </div>
+          ) : activeGuideTab === 'supabase' ? (
             <div className="space-y-4">
               <ol className="list-decimal list-inside space-y-2 text-xs text-slate-700 leading-relaxed bg-white p-4 rounded-lg border border-slate-200">
                 <li>

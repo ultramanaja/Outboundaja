@@ -76,13 +76,28 @@ const DEFAULT_STAGING_CODES = [
   'SKMN', 'SKB', 'STR', 'SRG', 'KRW',
 ] as const;
 
+const DEFAULT_STAGING_DESTINATIONS: Record<string, string> = {
+  TANB: 'Tanah Abang',
+  TBET: 'TEBET',
+  KBYB: 'Kebayoran Baru',
+  JGKA: 'Jagakarsa',
+  CNER: 'Cinere',
+  PSMG: 'Pasar Minggu',
+  BJIN: 'Bojong Indah',
+  TJHL: 'Tajur Halang',
+  BGOT: 'Bojong Timur',
+  KASB: 'Kasam Barat',
+  BOGU: 'Bojong Utara',
+  CLKU: 'Cileungsi',
+};
+
 function createSeedState(): AppDatabaseState {
   const baseTime = new Date().toISOString();
   return {
     stagings: DEFAULT_STAGING_CODES.map((code) => ({
       id: `stg-${code.toLowerCase()}`,
       name: code,
-      destination: 'Staging Default',
+      destination: DEFAULT_STAGING_DESTINATIONS[code] ?? 'Staging Default',
       isManual: false,
       createdAt: baseTime,
       updatedAt: baseTime,
@@ -615,6 +630,8 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   }
+
+  await bootstrapSupabaseSync();
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`StageFlow Outbound server running on http://0.0.0.0:${PORT}`);

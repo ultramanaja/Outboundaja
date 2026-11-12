@@ -149,7 +149,10 @@ export const ActiveStagingWorkspace: React.FC<ActiveStagingWorkspaceProps> = ({
               >
                 {stagings.map((stg) => (
                   <option key={stg.id} value={stg.id}>
-                    {stg.name} — {stg.destination} ({stg.items.length} bangsal)
+                    {stg.destination && stg.destination !== 'Staging Default'
+                      ? `${stg.name} — ${stg.destination}`
+                      : stg.name}{' '}
+                    ({stg.items.length} bangsal)
                   </option>
                 ))}
               </select>
@@ -236,7 +239,7 @@ export const ActiveStagingWorkspace: React.FC<ActiveStagingWorkspaceProps> = ({
                     setBarcodeInput(e.target.value);
                     if (scanError) setScanError(null);
                   }}
-                  placeholder="Scan atau ketik kode bangsal (contoh: BGS-JKT-4409)"
+                  placeholder="Scan atau ketik kode bangsal (contoh: BGS-001)"
                   className="w-full px-3.5 py-2.5 text-sm font-mono bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:font-sans placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                 />
               ) : (
@@ -249,7 +252,7 @@ export const ActiveStagingWorkspace: React.FC<ActiveStagingWorkspaceProps> = ({
                     setBarcodeInput(e.target.value);
                     if (scanError) setScanError(null);
                   }}
-                  placeholder={'BGS-JKT-4410\nBGS-JKT-4411\nBGS-JKT-4412'}
+                  placeholder={'BGS-001\nBGS-002\nBGS-003'}
                   className="w-full px-3.5 py-2 text-sm font-mono bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                 />
               )}

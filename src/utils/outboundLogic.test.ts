@@ -4,9 +4,13 @@ import { CODE128_PATTERNS, encodeCode128B } from './barcode128';
 import {
   BANGSAL_TAGS,
   DEFAULT_BANGSAL_TAG,
+  DEFAULT_STAGING_CODES,
+  DEFAULT_SUPABASE_PUBLISHABLE_KEY,
+  DEFAULT_SUPABASE_URL,
   addScannedItemsToStaging,
   buildOutboundCsv,
   calculateStagingTotals,
+  createCleanDefaultState,
   filterOutboundRecords,
   finalizeStagingToOutbound,
   normalizeBangsalTag,
@@ -161,3 +165,30 @@ test('finalizeStagingToOutbound moves items to outbound record with pending sync
   assert.equal(filtered.length, 1);
   assert.equal(filterOutboundRecords([outboundRecord], '9001', 'CARGO', 'pending').length, 0);
 });
+
+test('createCleanDefaultState ships all 37 required default stagings with zero dummy items or history', () => {
+  const expectedCodes = [
+    'TANB', 'TBET', 'KBYB', 'JGKA', 'CNER', 'PSMG', 'PREB', 'CPYU',
+    'KRAJ', 'BJIN', 'TJHL', 'BGOT', 'KASB', 'BOGU', 'CLKU', 'SKMJ',
+    'CBTO', 'SDBR', 'PDGD', 'TLJU', 'STIB', 'TNGH', 'BGSR', 'JTSA',
+    'TPOS', 'KDUM', 'SMJA', 'PMAS', 'PCRM', 'CGIN', 'CLBR', 'MLYH',
+    'SKMN', 'SKB', 'STR', 'SRG', 'KRW',
+  ];
+
+  assert.equal(DEFAULT_STAGING_CODES.length, 37);
+  assert.deepEqual([...DEFAULT_STAGING_CODES], expectedCodes);
+  assert.equal(new Set(DEFAULT_STAGING_CODES).size, 37);
+
+  const state = createCleanDefaultState('2026-11-12T10:00:00Z');
+  assert.equal(state.stagings.length, 37);
+  assert.deepEqual(
+    state.stagings.map((s) => s.name),
+    expectedCodes
+  );
+  assert.ok(state.stagings.every((s) => s.items.length === 0));
+  assert.equal(state.outboundHistory.length, 0);
+  assert.equal(state.syncSettings.supabaseUrl, DEFAULT_SUPABASE_URL);
+  assert.equal(state.syncSettings.supabaseAnonKey, DEFAULT_SUPABASE_PUBLISHABLE_KEY);
+  assert.equal(state.syncSettings.autoSyncSupabase, true);
+});
+

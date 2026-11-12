@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowRight, Plus, Trash2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ArrowRight, Plus, Search, Trash2 } from 'lucide-react';
 import {
   calculateStagingTotals,
   validateStagingInput,
@@ -21,8 +21,19 @@ export const StagingDirectoryView: React.FC<StagingDirectoryViewProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [destination, setDestination] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const filteredStagings = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return stagings;
+    return stagings.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.destination.toLowerCase().includes(q)
+    );
+  }, [stagings, searchQuery]);
 
   const handleQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,13 +59,30 @@ export const StagingDirectoryView: React.FC<StagingDirectoryViewProps> = ({
   return (
     <div className="space-y-6">
       <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-        <div className="p-5 sm:p-6 border-b border-slate-200">
-          <h2 className="text-base font-semibold text-slate-900">
-            Daftar Jalur Staging &amp; Tambah Staging Manual
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Kelola daftar nama staging aktif secara realtime. Staging yang ditambahkan di sini langsung tersedia di semua perangkat.
-          </p>
+        <div className="p-5 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">
+              Daftar Jalur Staging &amp; Tambah Staging Manual
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Total <span className="font-semibold text-slate-800 tabular-nums">{stagings.length}</span> staging aktif tersinkronisasi realtime ke semua perangkat.
+            </p>
+          </div>
+
+          <div className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <label htmlFor="dir-staging-search" className="sr-only">
+              Cari kode atau tujuan staging
+            </label>
+            <input
+              id="dir-staging-search"
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari kode staging (TANB, KRW...)"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            />
+          </div>
         </div>
 
         {/* Inline Manual Staging Form */}
@@ -78,7 +106,7 @@ export const StagingDirectoryView: React.FC<StagingDirectoryViewProps> = ({
                   setName(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="Contoh: STG-MKS-02"
+                placeholder="Contoh: DPK1 atau MKS1"
                 className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             </div>
@@ -132,47 +160,55 @@ export const StagingDirectoryView: React.FC<StagingDirectoryViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-sm">
-              {stagings.map((stg) => {
-                const { totalBangsal, totalBagseal } = calculateStagingTotals(stg.items);
-                return (
-                  <tr key={stg.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 pl-6 pr-3 font-semibold text-slate-900">
-                      {stg.name}
-                    </td>
-                    <td className="py-3.5 px-3 text-slate-600">{stg.destination}</td>
-                    <td className="py-3.5 px-3 text-xs text-slate-500">
-                      {stg.isManual ? 'Manual' : 'Terjadwal'}
-                    </td>
-                    <td className="py-3.5 px-3 text-right font-mono font-semibold text-slate-900 tabular-nums">
-                      {totalBangsal}
-                    </td>
-                    <td className="py-3.5 px-3 text-right font-mono font-semibold text-slate-900 tabular-nums">
-                      {totalBagseal}
-                    </td>
-                    <td className="py-3.5 pl-3 pr-6 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => onOpenStagingForScan(stg.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors whitespace-nowrap shrink-0"
-                        >
-                          Buka &amp; Scan
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={stagings.length <= 1}
-                          onClick={() => void onDeleteStaging(stg.id)}
-                          aria-label={`Hapus staging ${stg.name}`}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-30 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredStagings.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-xs text-slate-500">
+                    Tidak ada staging yang cocok dengan pencarian &ldquo;{searchQuery}&rdquo;.
+                  </td>
+                </tr>
+              ) : (
+                filteredStagings.map((stg) => {
+                  const { totalBangsal, totalBagseal } = calculateStagingTotals(stg.items);
+                  return (
+                    <tr key={stg.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 pl-6 pr-3 font-semibold text-slate-900">
+                        {stg.name}
+                      </td>
+                      <td className="py-3.5 px-3 text-slate-600">{stg.destination}</td>
+                      <td className="py-3.5 px-3 text-xs text-slate-500">
+                        {stg.isManual ? 'Manual' : 'Default'}
+                      </td>
+                      <td className="py-3.5 px-3 text-right font-mono font-semibold text-slate-900 tabular-nums">
+                        {totalBangsal}
+                      </td>
+                      <td className="py-3.5 px-3 text-right font-mono font-semibold text-slate-900 tabular-nums">
+                        {totalBagseal}
+                      </td>
+                      <td className="py-3.5 pl-3 pr-6 text-right">
+                        <div className="inline-flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onOpenStagingForScan(stg.id)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors whitespace-nowrap shrink-0"
+                          >
+                            Buka &amp; Scan
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={stagings.length <= 1}
+                            onClick={() => void onDeleteStaging(stg.id)}
+                            aria-label={`Hapus staging ${stg.name}`}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-30 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

@@ -3,6 +3,34 @@ export type BangsalTag = (typeof BANGSAL_TAGS)[number];
 
 export const DEFAULT_BANGSAL_TAG: BangsalTag = 'Reg';
 
+export const DEFAULT_SUPABASE_URL = 'https://japrxrakdloyhuchdlnr.supabase.co';
+export const DEFAULT_SUPABASE_PUBLISHABLE_KEY =
+  'sb_publishable__xAollf27vKdArrQ1QfZxA_qwCzTiv8';
+export const TARGET_PUBLISH_DOMAIN = 'https://outboundaja.skom.id';
+
+export const DEFAULT_STAGING_CODES = [
+  'TANB', 'TBET', 'KBYB', 'JGKA', 'CNER', 'PSMG', 'PREB', 'CPYU',
+  'KRAJ', 'BJIN', 'TJHL', 'BGOT', 'KASB', 'BOGU', 'CLKU', 'SKMJ',
+  'CBTO', 'SDBR', 'PDGD', 'TLJU', 'STIB', 'TNGH', 'BGSR', 'JTSA',
+  'TPOS', 'KDUM', 'SMJA', 'PMAS', 'PCRM', 'CGIN', 'CLBR', 'MLYH',
+  'SKMN', 'SKB', 'STR', 'SRG', 'KRW',
+] as const;
+
+export const DEFAULT_STAGING_DESTINATIONS: Readonly<Record<string, string>> = {
+  TANB: 'Tanah Abang',
+  TBET: 'TEBET',
+  KBYB: 'Kebayoran Baru',
+  JGKA: 'Jagakarsa',
+  CNER: 'Cinere',
+  PSMG: 'Pasar Minggu',
+  BJIN: 'Bojong Indah',
+  TJHL: 'Tajur Halang',
+  BGOT: 'Bojong Timur',
+  KASB: 'Kasam Barat',
+  BOGU: 'Bojong Utara',
+  CLKU: 'Cileungsi',
+};
+
 export interface BangsalItem {
   id: string;
   bangsalCode: string;
@@ -51,6 +79,29 @@ export interface AppDatabaseState {
   outboundHistory: OutboundRecord[];
   syncSettings: SyncSettings;
   lastUpdated: string;
+}
+
+export function createCleanDefaultState(nowIso: string = new Date().toISOString()): AppDatabaseState {
+  return {
+    stagings: DEFAULT_STAGING_CODES.map((code) => ({
+      id: `stg-${code.toLowerCase()}`,
+      name: code,
+      destination: DEFAULT_STAGING_DESTINATIONS[code] ?? 'Staging Default',
+      isManual: false,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      items: [],
+    })),
+    outboundHistory: [],
+    syncSettings: {
+      gsheetWebhookUrl: '',
+      sheetName: 'Outbound_Log',
+      supabaseUrl: DEFAULT_SUPABASE_URL,
+      supabaseAnonKey: DEFAULT_SUPABASE_PUBLISHABLE_KEY,
+      autoSyncSupabase: true,
+    },
+    lastUpdated: nowIso,
+  };
 }
 
 export function isValidBangsalTag(value: unknown): value is BangsalTag {

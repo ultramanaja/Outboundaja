@@ -82,7 +82,7 @@ export const ManualStagingModal: React.FC<ManualStagingModalProps> = ({
                 setName(e.target.value);
                 if (error) setError(null);
               }}
-              placeholder="Contoh: STG-DPS-04 atau Gate B3"
+              placeholder="Contoh: DPK1 atau Gate B3"
               autoFocus
               className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
             />
@@ -100,7 +100,7 @@ export const ManualStagingModal: React.FC<ManualStagingModalProps> = ({
               type="text"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              placeholder="Contoh: Hub Denpasar · Jalur Reguler & Cargo"
+              placeholder="Contoh: Hub Depok · Jalur Reguler & Cargo"
               className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
             />
           </div>

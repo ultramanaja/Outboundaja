@@ -190,6 +190,7 @@ async function bootstrapSupabaseSync(): Promise<void> {
         'apikey': rawKey,
         'Authorization': `Bearer ${rawKey}`,
       },
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return;
     const rows = (await res.json()) as Array<{
@@ -203,6 +204,14 @@ async function bootstrapSupabaseSync(): Promise<void> {
       dbState.outboundHistory = Array.isArray(rows[0].outbound_history) ? rows[0].outbound_history : [];
       dbState.lastUpdated = rows[0].last_updated || dbState.lastUpdated;
       saveDatabaseToDisk(dbState);
+      const payload = `data: ${JSON.stringify(dbState)}\n\n`;
+      for (const client of sseClients) {
+        try {
+          client.write(payload);
+        } catch {
+          sseClients.delete(client);
+        }
+      }
     } else {
       await mirrorToSupabaseIfConfigured(dbState);
     }
@@ -228,9 +237,27 @@ function commitAndBroadcast(): void {
   void mirrorToSupabaseIfConfigured(dbState);
 }
 
+function resolveServerPort(): number {
+  const args = process.argv.slice(2);
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--port' && args[i + 1]) {
+      const parsed = Number(args[i + 1]);
+      if (Number.isInteger(parsed) && parsed > 0) return parsed;
+    }
+    if (arg.startsWith('--port=')) {
+      const parsed = Number(arg.slice('--port='.length));
+      if (Number.isInteger(parsed) && parsed > 0) return parsed;
+    }
+  }
+  const appPort = Number(process.env.APP_PORT);
+  if (Number.isInteger(appPort) && appPort > 0) return appPort;
+  return 3000;
+}
+
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  const PORT = resolveServerPort();
 
   app.use(express.json({ limit: '2mb' }));
 
@@ -631,10 +658,9 @@ async function startServer() {
     app.use(vite.middlewares);
   }
 
-  await bootstrapSupabaseSync();
-
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`StageFlow Outbound server running on http://0.0.0.0:${PORT}`);
+    void bootstrapSupabaseSync();
   });
 }
 

@@ -2,8 +2,9 @@
   RewriteEngine On
   RewriteBase /
 
-  # Redirect HTTP to HTTPS if SSL is enabled
+  # Redirect HTTP to HTTPS if SSL is enabled (proxy/Cloudflare safe)
   RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
   # Serve existing files or directories directly

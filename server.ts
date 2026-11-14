@@ -237,7 +237,14 @@ function commitAndBroadcast(): void {
   void mirrorToSupabaseIfConfigured(dbState);
 }
 
-function resolveServerPort(): number {
+const isPassengerEnv = Boolean(
+  process.env.PASSENGER_APP_ENV ||
+    process.env.IN_PASSENGER ||
+    process.env.LSWS_CHILDREN ||
+    process.env.PASSENGER_BASE_URI
+);
+
+function resolveServerPort(): number | string {
   const args = process.argv.slice(2);
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -252,8 +259,19 @@ function resolveServerPort(): number {
   }
   const appPort = Number(process.env.APP_PORT);
   if (Number.isInteger(appPort) && appPort > 0) return appPort;
+
+  const envPort = process.env.PORT?.trim();
+  if (envPort) {
+    // Cloud Run AI Studio sets PORT=8080 for nginx reverse proxy; avoid colliding unless Passenger/cPanel
+    if (isPassengerEnv || envPort !== '8080') {
+      const parsed = Number(envPort);
+      return Number.isInteger(parsed) && parsed > 0 ? parsed : envPort;
+    }
+  }
   return 3000;
 }
+
+const sseKeepAlives = new Set<ReturnType<typeof setInterval>>();
 
 async function startServer() {
   const app = express();
@@ -276,12 +294,16 @@ async function startServer() {
         res.write(': keep-alive\n\n');
       } catch {
         clearInterval(keepAlive);
+        sseKeepAlives.delete(keepAlive);
         sseClients.delete(res);
       }
     }, 20000);
+    keepAlive.unref?.();
+    sseKeepAlives.add(keepAlive);
 
     req.on('close', () => {
       clearInterval(keepAlive);
+      sseKeepAlives.delete(keepAlive);
       sseClients.delete(res);
     });
   });
@@ -643,25 +665,62 @@ async function startServer() {
 
   const distPath = path.join(__dirname, 'dist');
   const isProd = process.env.NODE_ENV === 'production';
+  let viteInstance: { close: () => Promise<void>; middlewares: express.RequestHandler } | null = null;
 
-  if (isProd && fs.existsSync(distPath)) {
+  if ((isProd || isPassengerEnv) && fs.existsSync(distPath)) {
     app.use(express.static(distPath));
     app.get('*', (_req: Request, res: Response) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
+  } else if (isProd) {
+    app.get('*', (_req: Request, res: Response) => {
+      res
+        .status(503)
+        .send('Folder dist/ belum tersedia. Jalankan "npm run build" lalu restart aplikasi Node.js.');
+    });
   } else {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: isPassengerEnv ? false : undefined,
+      },
       appType: 'spa',
     });
+    viteInstance = vite;
     app.use(vite.middlewares);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`StageFlow Outbound server running on http://0.0.0.0:${PORT}`);
+  const onListening = () => {
+    console.log(`StageFlow Outbound server running on ${typeof PORT === 'number' ? `http://0.0.0.0:${PORT}` : PORT}`);
     void bootstrapSupabaseSync();
-  });
+  };
+
+  const httpServer =
+    typeof PORT === 'string' && Number.isNaN(Number(PORT))
+      ? app.listen(PORT, onListening)
+      : app.listen(Number(PORT), '0.0.0.0', onListening);
+
+  const shutdown = () => {
+    for (const timer of sseKeepAlives) {
+      clearInterval(timer);
+    }
+    sseKeepAlives.clear();
+    for (const client of sseClients) {
+      try {
+        client.end();
+      } catch {
+        // Ignore already closed stream
+      }
+    }
+    sseClients.clear();
+    void viteInstance?.close().catch(() => {});
+    httpServer.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 1500).unref?.();
+  };
+
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 }
 
 void startServer();
